@@ -61,7 +61,6 @@ class Options:
 
     plotTmin = -25   #Nejnižší teplota emagramu
     plotTmax = "auto"   #Nejvyšší teplota emagramu. Nastavením na "auto" se automaticky nastaví nejvyšší teplota datové řady zvýšená o 1°C.
-    plotAmin = "auto"   #Nejnižší výška emagramu. Nastavením na "auto" se automaticky nastaví na hladinu zemského povrchu.
     plotAmax = 5000   #Nejvyšší výška emagramu
 
     # --- VÝPOČET ---

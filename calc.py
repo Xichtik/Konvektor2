@@ -1,19 +1,17 @@
 """
-ZÁKLADNÍ JEDNOTKY (pokud není komentářem stanoveno jinak):
-Výška:                m
-Teplota:              °C
-Rosný bod:            °C
-Tlak:                 hPa
-Rychlost větru:       m/s
-Směr větru:           °
-Parciální tlak:       kPa
-Směšovací poměr:      kg/kg
-Relativní vlhkost:    bezr.
-Virtuální teplota:    K
+    ZÁKLADNÍ JEDNOTKY (pokud není komentářem stanoveno jinak):
+    Výška:                m
+    Teplota:              °C
+    Rosný bod:            °C
+    Tlak:                 hPa
+    Rychlost větru:       m/s
+    Směr větru:           °
+    Parciální tlak:       kPa
+    Směšovací poměr:      kg/kg
+    Relativní vlhkost:    bezr.
+    Virtuální teplota:    K
 
 """
-
-
 
 from preferences import Const
 from typing import List
