@@ -10,6 +10,7 @@
     Směšovací poměr:      kg/kg
     Relativní vlhkost:    bezr.
     Virtuální teplota:    K
+    Vert. tepl. gradient: °C/km
 
 """
 
@@ -62,6 +63,15 @@ def virt_temp_K(temp: float, dewp: float, pres: float) -> float: #Vrací virtuá
         raise ValueError("Virtual temperature smaller than dry bulb temperature!")
     return virt_t
 
+def eq_temp_K(temp:float, dewp:float, pres: float) -> float: #Vrací izobarickou ekvivalentní teplotu v K při teplotě temp, rosném bodu dewp a tlaku pres
+    return temp + (const.L*mixr(temp, dewp, pres)/(1000*const.cp)) + 273.15
+
+def pot_temp_K(temp: float, pres: float) -> float: #Vrací potenciální teplotu v K při teplotě temp a tlaku pres
+    return (temp + 273.15)*(1000/pres)**(const.Rd/(const.cp*1000))
+
+def theta_temp_K(temp: float, dewp: float, pres: float) -> float: #Vrací izobarickou ekvivalentní potenciální teplotu v K při teplotě temp, rosném bodu dewp a tlaku pres
+    return eq_temp_K(pot_temp_K(temp, pres), dewp, pres)
+
 def QNH(pres: float, alt: float) -> float: #Vrací QNH pro tlak pres naměřený ve výšce alt
     return pres*(1+((const.stdP**const.n)*0.0065*0.003472)*alt/(pres**const.n))**(1/const.n)
 
@@ -73,9 +83,33 @@ def adiab_dry_lift(temp0: float, alt0: float, alt1: float) -> float: #Vrací tep
 
 def adiab_mixr_lift(pres1: float, pres0: float, temp0: float, dewp0: float) -> float: #Vrací hodnotu rosného bodu v tlakové hladině pres při výstupu z výchozích hodnot pres0, temp0 a dewp0
     e = 100*pres1/((const.eps/mixr(temp0, dewp0, pres0)*1000)+1)
-    return dewp_from_vapour_p(e)
+    dewp_error = dewp_from_vapour_p(100*pres0/((const.eps/mixr(temp0, dewp0, pres0)*1000)+1)) - dewp0
+    return dewp_from_vapour_p(e) - dewp_error
 
+def salr(temp: float, pres:float) -> float: #Vrací hodnotu nasyceně adiabatického vertikálního teplotního gradient (SALR = Saturated Adiabatic Lapse Rate) v °C/km pro nasycenou částici o teplotě (a tím pádem i rosném bodu) temp a tlaku pres
+    cit = 1 + (const.eps*const.L*vapour_p(temp)*1000)/(const.Rd*(temp+273.15)*pres*100)
+    jme = 1 + ((const.eps**2) * (const.L**2) * vapour_p(temp)*1000)/(1000*const.cp*const.Rd*pres*100*((temp+273.15)**2))
+    return const.gammaD*cit/jme
 
+def alt_pres(alt:float, Alist: List, Plist: List) -> float: #Vrací tlak ve výšce alt
+    for a, p in zip(Alist, Plist):
+        if a >= alt:
+            return p
 
+def pres_alt(pres:float, Plist: List, Alist: List) -> float: #Vrací výšku tlakové hladiny pres
+    for p, a in zip(Plist, Alist):
+        if p <= pres:
+            return a
 
+def list_i(val: float, list: List) -> int: #Vrací index položky val v seznamu list
+    if list[0]>list[-1]:
+        for i,p in enumerate(list):
+            if val > p:
+                return i
+    else:
+        for i,a in enumerate(list):
+            if val < a:
+                return i
 
+def accel(temp: float, amb:float) -> float: #Vrací zrychlení [m/s] působící na částici o teplotě temp [°C] při okolní virtuální teplotě amb [K]
+    return const.g*(temp-amb+273.15)/amb

@@ -17,6 +17,6 @@ plot_emagram(data)
 plot.show()
 
 
-print(data.Plist[-1])
+print(salr(34, alt_pres(5000, data.Alist, data.Plist)))
 
 

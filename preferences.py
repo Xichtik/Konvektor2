@@ -59,9 +59,9 @@ class Options:
     Nbarbs = 30   #Vykreslovat šipku větru pro každý Nbarbs-tý datový bod
     showNEL = False #Zobrazovat NEL?
 
-    plotTmin = -25   #Nejnižší teplota emagramu
-    plotTmax = "auto"   #Nejvyšší teplota emagramu. Nastavením na "auto" se automaticky nastaví nejvyšší teplota datové řady zvýšená o 1°C.
-    plotAmax = 5000   #Nejvyšší výška emagramu
+    Tmin = -10   #Nejnižší teplota emagramu
+    Tmax = "auto"   #Nejvyšší teplota emagramu. Nastavením na "auto" se automaticky nastaví nejvyšší teplota datové řady zvýšená o 1°C.
+    Amax = 5000   #Nejvyšší výška emagramu
 
     # --- VÝPOČET ---
     CCLlimit = 400 #Nejnižší povolená výska konvektivní kondenzační hladiny
