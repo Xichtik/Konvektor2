@@ -34,7 +34,7 @@ def kts_ms(v: float) -> float: # Převádí hodnotu a v uzlech na metry za sekun
 def wind_deg_rad(w_deg: float) -> float: #Převádí w_deg ve stupních na radiány
     return -1*math.radians(180-w_deg)
 
-def alt_range(list: List, altlist: List, bottom: float, top: float) -> List: #Vrací pouze tu část seznamu, jejíž data se nacházejí mezi hladinami bottom a top
+def alt_range(list: List[float], altlist: List[float], bottom: float, top: float) -> List[float]: #Vrací pouze tu část seznamu, jejíž data se nacházejí mezi hladinami bottom a top
     vysledek = []
     for i in range(len(altlist)):
         if altlist[i] >= bottom and altlist[i] <= top:
@@ -91,17 +91,17 @@ def salr(temp: float, pres:float) -> float: #Vrací hodnotu nasyceně adiabatick
     jme = 1 + ((const.eps**2) * (const.L**2) * vapour_p(temp)*1000)/(1000*const.cp*const.Rd*pres*100*((temp+273.15)**2))
     return const.gammaD*cit/jme
 
-def alt_pres(alt:float, Alist: List, Plist: List) -> float: #Vrací tlak ve výšce alt
+def alt_pres(alt:float, Alist: List[float], Plist: List[float]) -> float: #Vrací tlak ve výšce alt
     for a, p in zip(Alist, Plist):
         if a >= alt:
             return p
 
-def pres_alt(pres:float, Plist: List, Alist: List) -> float: #Vrací výšku tlakové hladiny pres
+def pres_alt(pres:float, Plist: List[float], Alist: List[float]) -> float: #Vrací výšku tlakové hladiny pres
     for p, a in zip(Plist, Alist):
         if p <= pres:
             return a
 
-def list_i(val: float, list: List) -> int: #Vrací index položky val v seznamu list
+def list_i(val: float, list: List[float]) -> int: #Vrací index položky val v seznamu list
     if list[0]>list[-1]:
         for i,p in enumerate(list):
             if val > p:

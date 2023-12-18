@@ -6,7 +6,9 @@ from calc import *
 
 options = Options()
 
-def plot_emagram(data: Data):
+
+
+def plot_emagram(data: Data) -> None:
     Emagram_fig = plot.figure(dpi = options.dpi)
     plot.figure(Emagram_fig)
     emagram = plot.subplot(111)
@@ -22,6 +24,9 @@ def plot_emagram(data: Data):
     pres_axis.yaxis.set_minor_formatter(ticker.LogFormatter(minor_thresholds=(1500,1500)))
     pres_axis.yaxis.grid(color = 'b', linestyle = ':', which = 'both', linewidth = 0.25)
 
+    if options.background_curves is True:
+        plot_background_curves(emagram, data, options.background_curves_interval)
+
     emagram.plot(data.Tlist, data.Alist, color = 'r')
     emagram.plot(data.Hlist, data.Alist, color = 'b')
     emagram.plot(data.dry_adiabat(data.Tlist[0], data.Alist[0]), data.Alist, color = 'xkcd:orange')
@@ -29,6 +34,7 @@ def plot_emagram(data: Data):
     emagram.plot(data.conv_dry_adiabat(), data.Alist, color = 'xkcd:orange')
     emagram.plot(data.sat_adiabat(data.find_LCL()[0], data.find_LCL()[1]), data.Alist, color = 'g')
     emagram.plot(data.sat_adiabat(data.find_CCL()[0], data.find_CCL()[1]), data.Alist, color = 'g')
+    
 
     emagram.plot(data.find_LCL()[0], data.find_LCL()[1], color = 'k', marker = '_', markersize = 20)
     emagram.plot(data.find_CCL()[0], data.find_CCL()[1], color = 'k', marker = '_', markersize = 20)
@@ -40,3 +46,7 @@ def plot_emagram(data: Data):
     emagram.set_xlabel("Temperature [$°C$]")
     pres_axis.set_ylabel("Pressure [$hPa$]")
 
+def plot_background_curves(emagram: plot, data: Data, interval:float) -> None:
+    for t in range(-200/interval,100/interval):
+            emagram.plot(data.sat_adiabat(interval*t, data.Alist[0]), data.Alist, color = 'g', linestyle = ':', linewidth = 1)
+            emagram.plot(data.mixr_curve(interval*t), data.Alist, color = 'xkcd:gold', linestyle = ':', linewidth = 1)
