@@ -14,11 +14,13 @@
 
 """
 
-from preferences import Const
+from preferences import Const, Options
 from typing import List
 import math
 
 const = Const()
+options = Options()
+
 
 def sign(x: float) -> int: #Zjišťuje znaménko čísla x (u kladných vrací 1, u záporných -1, u 0 vrací 0)
     if x > 0:
@@ -56,6 +58,9 @@ def rel_humi(temp: float, dewp: float) -> float: #Vrací relativní vlhkost při
 def mixr(temp: float, dewp: float, pres: float) -> float: #Vrací směšovací poměr vodní páry v kg/kg při teplotě temp, rosném bodu dewp a tlaku pres
     return (rel_humi(temp, dewp)*vapour_p(temp)*const.eps)/100*(pres-vapour_p(temp))/1000
 
+def density(temp: float, dewp: float, pres: float) -> float: #Vrací hustotu vzduchu o teplotě temp [°C], rosném bodu dewp [°C] a tlaku pres [hPa]
+    return ((pres*100-vapour_p(dewp)*100)*const.Md + 100*vapour_p(dewp)*const.Mv)/(const.R*(temp+273.15))
+
 def virt_temp_K(temp: float, dewp: float, pres: float) -> float: #Vrací virtuální teplotu v K při teplotě temp, rosném bodu dewp a tlaku pres
     s = mixr(temp, dewp, pres)/(mixr(temp, dewp, pres) + 1)
     virt_t = (temp+273.15)*(1+((const.Rv/const.Rd)-1)*s)
@@ -70,7 +75,7 @@ def pot_temp_K(temp: float, pres: float) -> float: #Vrací potenciální teplotu
     return (temp + 273.15)*(1000/pres)**(const.Rd/(const.cp*1000))
 
 def theta_temp_K(temp: float, dewp: float, pres: float) -> float: #Vrací izobarickou ekvivalentní potenciální teplotu v K při teplotě temp, rosném bodu dewp a tlaku pres
-    return eq_temp_K(pot_temp_K(temp, pres), dewp, pres)
+    return eq_temp_K(pot_temp_K(temp, pres)-273.15, dewp, pres)
 
 def QNH(pres: float, alt: float) -> float: #Vrací QNH pro tlak pres naměřený ve výšce alt
     return pres*(1+((const.stdP**const.n)*0.0065*0.003472)*alt/(pres**const.n))**(1/const.n)
@@ -91,12 +96,15 @@ def salr(temp: float, pres:float) -> float: #Vrací hodnotu nasyceně adiabatick
     jme = 1 + ((const.eps**2) * (const.L**2) * vapour_p(temp)*1000)/(1000*const.cp*const.Rd*pres*100*((temp+273.15)**2))
     return const.gammaD*cit/jme
 
-def alt_pres(alt:float, Alist: List[float], Plist: List[float]) -> float: #Vrací tlak ve výšce alt
+def lapse_rate(t0: float, t1: float, a0: float, a1: float) -> float: #Vrací hodnotu vertikálního teplotního gradientu [°C/km] mezi hladinami a0 a a1 [m] při teplotách t0, t1 [°C]
+    return (t0-t1)/(a1-a0-0.01)*1000
+
+def data_at_alt(alt:float, Alist: List[float], Plist: List[float]) -> float: #Vrací tlak ve výšce alt
     for a, p in zip(Alist, Plist):
         if a >= alt:
             return p
 
-def pres_alt(pres:float, Plist: List[float], Alist: List[float]) -> float: #Vrací výšku tlakové hladiny pres
+def data_at_pres(pres:float, Plist: List[float], Alist: List[float]) -> float: #Vrací výšku tlakové hladiny pres
     for p, a in zip(Plist, Alist):
         if p <= pres:
             return a
@@ -105,11 +113,28 @@ def list_i(val: float, list: List[float]) -> int: #Vrací index položky val v s
     if list[0]>list[-1]:
         for i,p in enumerate(list):
             if val > p:
-                return i
+                break
+        return i
     else:
         for i,a in enumerate(list):
             if val < a:
-                return i
+                break
+        return i
 
-def accel(temp: float, amb:float) -> float: #Vrací zrychlení [m/s] působící na částici o teplotě temp [°C] při okolní virtuální teplotě amb [K]
+def accel(temp: float, amb:float) -> float: #Vrací zrychlení [m/s^2] působící na částici o teplotě temp [°C] při okolní virtuální teplotě amb [K]
     return const.g*(temp-amb+273.15)/amb
+
+def drag_sphere(v: float, S: float, rho: float) -> float: #Vrací sílu odporu vzduchu [N], působící na kouli o průřezu S [m^2] pohybující se rychlostí v [m/s] vzduchem o hustotě rho [kg/m^3]
+    return const.cd*S*rho/2*v**2
+
+def volume_ideal_gas(p: float, T: float, n: float = const.mol) -> float: #Vrací objem [m^3] ideálního plynu o látkovém množství n [mol], tlaku pres [hPa] a teplotě T [°C]
+    return n*const.R*(T+273.15)/p/100
+
+def radius_sphere(V: float) -> float: #Vrací poloměr [m] koule o objemu V [m^3]
+    return math.cbrt(V*3/4/math.pi)
+
+def circle_area(r: float) -> float: #Vrací obsah [m^2] kruhu o poloměru r [m]
+    return math.pi*r**2
+
+
+

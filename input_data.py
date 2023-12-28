@@ -1,8 +1,12 @@
 import calc
 import pandas
+from preferences import Const, Options
 from typing import List
 
-class Data:
+const = Const()
+options = Options()
+
+class Data():
     def __init__(self, name: str):
         self.csv = pandas.read_csv(name, header=0)
         self.Plist = list(self.csv.Pressure) #Seznam tlaků
@@ -53,4 +57,33 @@ class Data:
                 curve.append(-250)
         return curve
 
+    def find_tropo1(self) -> tuple[float, float|int]: #Vrací souřadnice (temp, alt) [°C, m] první konvenční tropopauzy
+        for temp, alt, pres in zip(self.Tlist, self.Alist, self.Plist):
+            if max([calc.lapse_rate(temp, self.Tlist[j+1], alt, self.Alist[j+1]) for j in range(calc.list_i(alt, self.Alist), calc.list_i(alt+2000, self.Alist))]) < 2 and pres < 500:
+                    break
+        return (temp, alt)
+            
+    def check_tropo2(self, tropo_temp: float, tropo_alt: float) -> bool: #Vrací bool [True/False], zda existuje druhá konvenční tropopauza
+        for temp, alt in zip(self.Tlist[calc.list_i(tropo_alt, self.Alist):], self.Alist[calc.list_i(tropo_alt, self.Alist):]):
+            if min([calc.lapse_rate(temp, self.Tlist[j+1], alt, self.Alist[j+1]) for j in range(calc.list_i(alt, self.Alist)-1, calc.list_i(alt+1000, self.Alist))]) > 3:
+                return True
+        return False
 
+    def find_tropo2(self) -> tuple[float, float|int]: #Vrací souřadnice (temp, alt) [°C, m] druhé konvenční tropopauzy
+        if self.check_tropo2(*self.find_tropo1()) is False:
+            return (-273.15,99999)
+        for temp, alt in zip(self.Tlist[calc.list_i(self.find_tropo1()[1], self.Alist):], self.Alist[calc.list_i(self.find_tropo1()[1], self.Alist):]):
+            if min([calc.lapse_rate(temp, self.Tlist[j+1], alt, self.Alist[j+1]) for j in range(calc.list_i(alt, self.Alist)-1, calc.list_i(alt+1000, self.Alist))]) > 3:
+                for t, a in zip(self.Tlist[calc.list_i(alt, self.Alist):], self.Alist[calc.list_i(alt, self.Alist):]):
+                    if max([calc.lapse_rate(t, self.Tlist[j+1], a, self.Alist[j+1]) for j in range(calc.list_i(a, self.Alist), calc.list_i(a+2000, self.Alist))]) < 2:
+                        return(t, a)
+        return (t, a)
+        
+    def stability_get(self, i) -> int: #Zjišťuje stabilitu teplotního zvrstvení v hladině s indexem i. Vrací -1 při nestabilním, 0 při labilním a 1 při stabilním zvrstvení.
+        if calc.lapse_rate(calc.pot_temp_K(self.Tlist[i-options.stabDif], self.Plist[i-options.stabDif]), calc.pot_temp_K(self.Tlist[i], self.Plist[i]), self.Alist[i-options.stabDif], self.Alist[i]) > 0:
+            return -1
+        if abs(calc.lapse_rate(calc.pot_temp_K(self.Tlist[i-options.stabDif], self.Plist[i-options.stabDif]), calc.pot_temp_K(self.Tlist[i], self.Plist[i]), self.Alist[i-options.stabDif], self.Alist[i])) <= options.stabDev:
+            return 0
+        if calc.lapse_rate(calc.pot_temp_K(self.Tlist[i-options.stabDif], self.Plist[i-options.stabDif]), calc.pot_temp_K(self.Tlist[i], self.Plist[i]), self.Alist[i-options.stabDif], self.Alist[i]) < options.stabDev:
+            return 1
+        return 0

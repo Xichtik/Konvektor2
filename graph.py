@@ -3,12 +3,12 @@ import matplotlib.ticker as ticker
 from preferences import Options
 from input_data import Data
 from calc import *
+from sim import *
 
 options = Options()
 
 
-
-def plot_emagram(data: Data) -> None:
+def plot_emagram(data: Data, parcel: Parcel) -> None:
     Emagram_fig = plot.figure(dpi = options.dpi)
     plot.figure(Emagram_fig)
     emagram = plot.subplot(111)
@@ -27,26 +27,151 @@ def plot_emagram(data: Data) -> None:
     if options.background_curves is True:
         plot_background_curves(emagram, data, options.background_curves_interval)
 
-    emagram.plot(data.Tlist, data.Alist, color = 'r')
-    emagram.plot(data.Hlist, data.Alist, color = 'b')
-    emagram.plot(data.dry_adiabat(data.Tlist[0], data.Alist[0]), data.Alist, color = 'xkcd:orange')
-    emagram.plot(data.mixr_curve(data.Hlist[0]), data.Alist, color = 'xkcd:gold')
+    #emagram.plot(parcel.history.temp, parcel.history.alt, linestyle = '--', color = 'xkcd:brown')
+    emagram.plot(data.Tlist, data.Alist, color = 'r', label = 'Temperature [°C]')
+    emagram.plot([virt_temp_K(data.Tlist[i], data.Hlist[i], data.Plist[i])-273.15 for i in range(len(data.Alist))], data.Alist, color = 'r', linestyle = ':', label = 'Virtual temperature [°C]')
+    emagram.plot(data.Hlist, data.Alist, color = 'b', label = 'Dew point [°C]')
+    emagram.plot(data.dry_adiabat(data.Tlist[0], data.Alist[0]), data.Alist, color = 'xkcd:orange', label = 'Dry adiabats')
+    emagram.plot(data.mixr_curve(data.Hlist[0]), data.Alist, color = 'xkcd:gold', label = 'Isogram')
     emagram.plot(data.conv_dry_adiabat(), data.Alist, color = 'xkcd:orange')
-    emagram.plot(data.sat_adiabat(data.find_LCL()[0], data.find_LCL()[1]), data.Alist, color = 'g')
+    emagram.plot(data.sat_adiabat(data.find_LCL()[0], data.find_LCL()[1]), data.Alist, color = 'g', label = 'Saturated adiabats')
     emagram.plot(data.sat_adiabat(data.find_CCL()[0], data.find_CCL()[1]), data.Alist, color = 'g')
-    
 
+    
     emagram.plot(data.find_LCL()[0], data.find_LCL()[1], color = 'k', marker = '_', markersize = 20)
     emagram.plot(data.find_CCL()[0], data.find_CCL()[1], color = 'k', marker = '_', markersize = 20)
-    emagram.text(data.find_LCL()[0], data.find_LCL()[1], "     LCL     " + str(data.find_LCL()[1]) + 'm, ' + str(round(data.find_LCL()[0], 1)) + " °C", horizontalalignment='right')
-    emagram.text(data.find_CCL()[0], data.find_CCL()[1], "     CCL     " + str(data.find_CCL()[1]) + 'm, ' + str(round(data.find_CCL()[0], 1)) + " °C", horizontalalignment='right')
+    emagram.plot(data.find_tropo1()[0], data.find_tropo1()[1], color = 'k', marker = "_", markersize = 30)
+    if data.check_tropo2(*data.find_tropo1()) is True:
+        emagram.plot(data.find_tropo2()[0], data.find_tropo2()[1], color = 'k', marker = "_", markersize = 30)
+        emagram.text(data.find_tropo2()[0], data.find_tropo2()[1], "2nd Tropopause:   " +'\n'+ str(data.find_tropo2()[1]) + 'm, ' + str(round(data.find_tropo2()[0], 1)) + " °C   ", horizontalalignment='right', verticalalignment = 'center_baseline')
+    emagram.text(data.find_LCL()[0], data.find_LCL()[1], "LCL:  " + str(data.find_LCL()[1]) + 'm, ' + str(round(data.find_LCL()[0], 1)) + " °C   ", horizontalalignment='right', verticalalignment = 'center_baseline')
+    emagram.text(data.find_CCL()[0], data.find_CCL()[1], "CCL:  " + str(data.find_CCL()[1]) + 'm, ' + str(round(data.find_CCL()[0], 1)) + " °C   ", horizontalalignment='right', verticalalignment = 'center_baseline')
+    emagram.text(data.find_tropo1()[0], data.find_tropo1()[1], "Tropopause:   " +'\n'+ str(data.find_tropo1()[1]) + 'm, ' + str(round(data.find_tropo1()[0], 1)) + " °C   ", horizontalalignment='right', verticalalignment = 'center_baseline')
 
+    emagram.legend()
     emagram.grid()
     emagram.set_ylabel("Altitude AMSL [$m$]")
     emagram.set_xlabel("Temperature [$°C$]")
     pres_axis.set_ylabel("Pressure [$hPa$]")
+    Emagram_fig.canvas.manager.set_window_title('Emagram')
+
+def plot_humidity(data: Data) -> None:
+    Hum_fig = plot.figure(dpi = options.dpi)
+    plot.figure(Hum_fig)
+    hum = plot.subplot(111)
+    hum.axis([0, 100, min(data.Alist), options.Amax])
+
+    hum.plot([rel_humi(data.Tlist[i], data.Hlist[i])*100 for i in range(len(data.Tlist))], data.Alist, color = 'b', label = 'Relative humidity [%]')
+    hum.legend()
+    hum.grid()
+    hum.set_xlabel("Relative humidity [%]")
+    hum.set_ylabel("Altitude AMSL [m]")
+    Hum_fig.canvas.manager.set_window_title('Relative humidity')
+
+def plot_wind(data: Data) -> None:
+    Wind_fig = plot.figure(dpi = options.dpi)
+    plot.figure(Wind_fig)
+    wind = plot.subplot(111)
+    wind.axis([0, 40, min(data.Alist), options.Amax])
+
+    wind.plot(data.Slist, data.Alist, color = 'r', label = 'Wind speed [m/s]')
+    for i in range(len(data.Alist)):
+        if i%int(options.Nbarbs*options.Amax/10000) == 0:
+            wind.barbs(37.5, data.Alist[i], data.Slist[i]*math.sin(wind_deg_rad(data.Dlist[i]))/const.ktstoms, data.Slist[i]*math.cos(wind_deg_rad(data.Dlist[i]))/const.ktstoms, barbcolor='k', flagcolor='k', length=6, linewidth=1)
+
+    deg_axis = wind.twiny()
+    deg_axis.set_xlim(0, 360)
+    deg_axis.xaxis.set_major_locator(ticker.MultipleLocator(45))
+
+    deg_axis.scatter(data.Dlist, data.Alist, 10, color = 'b', label = 'Wind direction [°]')
+    
+    wind.grid()
+    wind.set_xlabel("Wind speed [m/s]")
+    wind.set_ylabel("Altitude AMSL [m]")
+    deg_axis.set_xlabel("Wind direction [°]")
+    Wind_fig.canvas.manager.set_window_title('Wind')
+
+def plot_hodograph(data: Data) -> None:
+    Hodograph_fig = plot.figure(dpi = options.dpi)
+    plot.figure(Hodograph_fig)
+    hodograph = plot.subplot(111, projection = 'polar')
+    hodograph.set_theta_zero_location('N')
+    hodograph.set_theta_direction(-1)
+
+    hodograph.plot(alt_range([wind_deg_rad(data.Dlist[i]) for i in range(len(data.Alist))], data.Alist, 0, 1050), alt_range(data.Slist, data.Alist, 0, 1050), color = 'r')
+    hodograph.plot(alt_range([wind_deg_rad(data.Dlist[i]) for i in range(len(data.Alist))], data.Alist, 1000, 2050), alt_range(data.Slist, data.Alist, 1000, 2050), color = 'xkcd:orange')
+    hodograph.plot(alt_range([wind_deg_rad(data.Dlist[i]) for i in range(len(data.Alist))], data.Alist, 2000, 3050), alt_range(data.Slist, data.Alist, 2000, 3050), color = 'y')
+    hodograph.plot(alt_range([wind_deg_rad(data.Dlist[i]) for i in range(len(data.Alist))], data.Alist, 3000, 6050), alt_range(data.Slist, data.Alist, 3000, 6050), color = 'g')
+    hodograph.plot(alt_range([wind_deg_rad(data.Dlist[i]) for i in range(len(data.Alist))], data.Alist, 6000, 9050), alt_range(data.Slist, data.Alist, 6000, 9050), color = 'b')
+    hodograph.plot(alt_range([wind_deg_rad(data.Dlist[i]) for i in range(len(data.Alist))], data.Alist, 9000, 12000), alt_range(data.Slist, data.Alist, 9000, 12000), color = 'xkcd:violet')
+
+    hodograph.plot(wind_deg_rad(data_at_alt(1000, data.Alist, data.Dlist)), data_at_alt(1000, data.Alist, data.Slist), color = 'k', marker = 'x', markersize = 15, linewidth = 3)
+    hodograph.plot(wind_deg_rad(data_at_alt(2000, data.Alist, data.Dlist)), data_at_alt(2000, data.Alist, data.Slist), color = 'k', marker = 'x', markersize = 15, linewidth = 3)
+    hodograph.plot(wind_deg_rad(data_at_alt(3000, data.Alist, data.Dlist)), data_at_alt(3000, data.Alist, data.Slist), color = 'k', marker = 'x', markersize = 15, linewidth = 3)
+    hodograph.plot(wind_deg_rad(data_at_alt(6000, data.Alist, data.Dlist)), data_at_alt(6000, data.Alist, data.Slist), color = 'k', marker = 'x', markersize = 15, linewidth = 3)
+    hodograph.plot(wind_deg_rad(data_at_alt(9000, data.Alist, data.Dlist)), data_at_alt(9000, data.Alist, data.Slist), color = 'k', marker = 'x', markersize = 15, linewidth = 3)
+    hodograph.plot(wind_deg_rad(data_at_alt(12000, data.Alist, data.Dlist)), data_at_alt(12000, data.Alist, data.Slist), color = 'k', marker = 'x', markersize = 15, linewidth = 3)
+    
+    hodograph.text(wind_deg_rad(data_at_alt(1000, data.Alist, data.Dlist)), data_at_alt(1000, data.Alist, data.Slist), " 1", verticalalignment = 'center', fontsize = 15)
+    hodograph.text(wind_deg_rad(data_at_alt(2000, data.Alist, data.Dlist)), data_at_alt(2000, data.Alist, data.Slist), " 2", verticalalignment = 'center', fontsize = 15)
+    hodograph.text(wind_deg_rad(data_at_alt(3000, data.Alist, data.Dlist)), data_at_alt(3000, data.Alist, data.Slist), " 3", verticalalignment = 'center', fontsize = 15)
+    hodograph.text(wind_deg_rad(data_at_alt(6000, data.Alist, data.Dlist)), data_at_alt(6000, data.Alist, data.Slist), " 6", verticalalignment = 'center', fontsize = 15)
+    hodograph.text(wind_deg_rad(data_at_alt(9000, data.Alist, data.Dlist)), data_at_alt(9000, data.Alist, data.Slist), " 9", verticalalignment = 'center', fontsize = 15)
+    hodograph.text(wind_deg_rad(data_at_alt(12000, data.Alist, data.Dlist)), data_at_alt(12000, data.Alist, data.Slist), " 12", verticalalignment = 'center', fontsize = 15)
+    
+    Hodograph_fig.canvas.manager.set_window_title('Hodograph')
+
+def plot_stability(data: Data) -> None:
+    Stab_fig = plot.figure(dpi = options.dpi)
+    plot.figure(Stab_fig)
+    stab = plot.subplot(111)
+    stab.axis([min(data.Tlist)+273.15, max([calc.theta_temp_K(data.Tlist[i], data.Hlist[i], data.Plist[i]) for i in range(calc.list_i(options.Amax, data.Alist))])+10, min(data.Alist), options.Amax])
+
+    stab.plot([data.Tlist[i]+273.15 for i in range(len(data.Tlist))], data.Alist, color = 'r', label = 'Temperature [K]', zorder = 3)
+    stab.plot([calc.pot_temp_K(data.Tlist[i], data.Plist[i]) for i in range(len(data.Tlist))], data.Alist, color = 'xkcd:orange', label = 'Potential temperature [K]')
+    stab.plot([calc.eq_temp_K(data.Tlist[i], data.Hlist[i], data.Plist[i]) for i in range(len(data.Tlist))], data.Alist, color = 'xkcd:blue', label = 'Isobaric equivalent temperature [K]')
+    stab.plot([calc.theta_temp_K(data.Tlist[i], data.Hlist[i], data.Plist[i]) for i in range(len(data.Tlist))], data.Alist, color = 'xkcd:violet', label = 'Theta-E [K]')
+
+    for i in range(options.stabDif, len(data.Alist)):
+        if data.stability_get(i) == -1:
+            stab.plot(stab.get_xlim()[1]-5, data.Alist[i], color = 'xkcd:green', marker = '_', markersize = 30)
+        if data.stability_get(i) == 1:
+            stab.plot(stab.get_xlim()[1]-5, data.Alist[i], color = 'xkcd:red', marker = '_', markersize = 30)
+        if data.stability_get(i) == 0:
+            stab.plot(stab.get_xlim()[1]-5, data.Alist[i], color = 'xkcd:gold', marker = '_', markersize = 30)
+
+    stab.grid()
+    stab.legend()
+    stab.set_xlabel("Temperature [K]")
+    stab.set_ylabel("Altitude AMSL [m]")
+    Stab_fig.canvas.manager.set_window_title('Stability')
+
+def plot_density(data: Data) -> None:
+    Rho_fig = plot.figure(dpi = options.dpi)
+    plot.figure(Rho_fig)
+    rho = plot.subplot(111)
+    rho.axis([0, density(data.Tlist[0], data.Hlist[0], data.Plist[0])*1.03, min(data.Alist), options.Amax])
+
+    rho.plot([density(data.Tlist[i], data.Hlist[i], data.Plist[i]) for i in range(len(data.Alist))], data.Alist, color = 'xkcd:brown', label = 'Air density [kg/m^3]')
+
+    rho.legend()
+    rho.grid()
+    rho.set_xlabel("Density [kg/m^3]")
+    rho.set_ylabel("Altitude AMSL [m]")
+    Rho_fig.canvas.manager.set_window_title('Air density')
+
 
 def plot_background_curves(emagram: plot, data: Data, interval:float) -> None:
-    for t in range(-200/interval,100/interval):
+    for t in range(int(-200/interval),int(100/interval)):
             emagram.plot(data.sat_adiabat(interval*t, data.Alist[0]), data.Alist, color = 'g', linestyle = ':', linewidth = 1)
             emagram.plot(data.mixr_curve(interval*t), data.Alist, color = 'xkcd:gold', linestyle = ':', linewidth = 1)
+
+def plot_parcel_alt(parcel: Parcel):
+    parcel_fig = plot.figure(dpi = options.dpi)
+    plot.figure(parcel_fig)
+    parcel_plot = plot.subplot(111)
+    parcel_plot.plot(parcel.history.v_z, parcel.history.alt)
+    """
+    parcel_plot.axis([min(parcel.history.temp), max(parcel.history.temp), min(parcel.history.alt), max(parcel.history.alt)])
+    parcel_plot.plot(parcel.history.temp, parcel.history.alt)
+    """

@@ -43,11 +43,11 @@ class Options:
     csv_path = "./data/RAW_11747_2021-06-24_1200.csv"
 
     # --- SIMULACE ---
-    dt = 0.01   #Časový krok pro simulace
-    sim_secs = 6000   #Simulovaná doba v sekundách
+    dt = 0.1   #Časový krok pro simulace
+    sim_secs = 2000   #Simulovaná doba v sekundách
     cycles = int(sim_secs/dt)   #Počet iterací simulace
     simUntilCCL = False #Při hodnotě True se simulace automaticky zastaví při dostoupání částice do kondenzační hladiny
-    notif_interval = 50000   #Interval, po kolika iteracích se printuje oznámení
+    notif_interval = 5000   #Interval, po kolika iteracích se printuje oznámení
     
     v0 = 0   #Počáteční vertikální rychlost konvektivní částice
     virtv0 = 0   #Počáteční vertikální rychlost konvektivní částice při výpočtech s virtuální teplotou
@@ -56,20 +56,20 @@ class Options:
 
     # --- ZOBRAZENÍ ---
     dpi = 60 #Rozlišení grafů v DPI
-    Nbarbs = 30   #Vykreslovat šipku větru pro každý Nbarbs-tý datový bod
+    Nbarbs = 60   #Vykreslovat šipku větru pro každý Nbarbs-tý datový bod
     showNEL = False #Zobrazovat NEL?
 
     Tmin = -30   #Nejnižší teplota emagramu
     Tmax = "auto"   #Nejvyšší teplota emagramu. Nastavením na "auto" se automaticky nastaví nejvyšší teplota datové řady zvýšená o 1°C.
     Amax = 10000   #Nejvyšší výška emagramu
 
-    background_curves = True #Zobrazovat standardní adiabaty do pozadí?
-    background_curves_interval = 2 #Vykreslovat adiabaty do pozadí každých x °C
+    background_curves = False #Zobrazovat standardní adiabaty do pozadí?
+    background_curves_interval = 5 #Vykreslovat adiabaty do pozadí každých x °C
 
     # --- VÝPOČET ---
     CCLlimit = 400 #Nejnižší povolená výska konvektivní kondenzační hladiny
-    stabDev = -0.4 #Při kladných hodnotách bude zvrstvení hodnoceno jako více stabilní, při záporných jako méně stabilní
-    stabDif = 5 #Výškový krok mezi srovnávanými hladinami při určování stability teplotního zvrstvení
+    stabDev = 9.8 #Při kladných hodnotách bude zvrstvení hodnoceno jako více stabilní, při záporných jako méně stabilní
+    stabDif = 10 #Výškový krok mezi srovnávanými hladinami při určování stability teplotního zvrstvení
 
     
     
