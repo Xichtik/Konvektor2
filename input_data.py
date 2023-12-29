@@ -82,8 +82,13 @@ class Data():
     def stability_get(self, i) -> int: #Zjišťuje stabilitu teplotního zvrstvení v hladině s indexem i. Vrací -1 při nestabilním, 0 při labilním a 1 při stabilním zvrstvení.
         if calc.lapse_rate(calc.pot_temp_K(self.Tlist[i-options.stabDif], self.Plist[i-options.stabDif]), calc.pot_temp_K(self.Tlist[i], self.Plist[i]), self.Alist[i-options.stabDif], self.Alist[i]) > 0:
             return -1
-        if abs(calc.lapse_rate(calc.pot_temp_K(self.Tlist[i-options.stabDif], self.Plist[i-options.stabDif]), calc.pot_temp_K(self.Tlist[i], self.Plist[i]), self.Alist[i-options.stabDif], self.Alist[i])) <= options.stabDev:
-            return 0
-        if calc.lapse_rate(calc.pot_temp_K(self.Tlist[i-options.stabDif], self.Plist[i-options.stabDif]), calc.pot_temp_K(self.Tlist[i], self.Plist[i]), self.Alist[i-options.stabDif], self.Alist[i]) < options.stabDev:
+        if calc.lapse_rate(calc.pot_temp_K(self.Tlist[i-options.stabDif], self.Plist[i-options.stabDif]), calc.pot_temp_K(self.Tlist[i], self.Plist[i]), self.Alist[i-options.stabDif], self.Alist[i]) < calc.salr(self.Tlist[i], self.Plist[i])-const.gammaD:
             return 1
-        return 0
+        #if abs(calc.lapse_rate(calc.pot_temp_K(self.Tlist[i-options.stabDif], self.Plist[i-options.stabDif]), calc.pot_temp_K(self.Tlist[i], self.Plist[i]), self.Alist[i-options.stabDif], self.Alist[i])) <= options.stabDev:
+        else:
+            return 0
+        #return 0
+    
+    def brunt_vaisala_freq(self, i) -> float:
+        pass
+

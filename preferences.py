@@ -40,11 +40,11 @@ class Const:
 @dataclass
 class Options:
 
-    csv_path = "./data/RAW_11747_2021-06-24_1200.csv"
+    csv_path = "./data/RAW_11520_2022-03-05_1200.csv"
 
     # --- SIMULACE ---
     dt = 0.1   #Časový krok pro simulace
-    sim_secs = 2000   #Simulovaná doba v sekundách
+    sim_secs = 10000   #Simulovaná doba v sekundách
     cycles = int(sim_secs/dt)   #Počet iterací simulace
     simUntilCCL = False #Při hodnotě True se simulace automaticky zastaví při dostoupání částice do kondenzační hladiny
     notif_interval = 5000   #Interval, po kolika iteracích se printuje oznámení
@@ -61,7 +61,7 @@ class Options:
 
     Tmin = -30   #Nejnižší teplota emagramu
     Tmax = "auto"   #Nejvyšší teplota emagramu. Nastavením na "auto" se automaticky nastaví nejvyšší teplota datové řady zvýšená o 1°C.
-    Amax = 10000   #Nejvyšší výška emagramu
+    Amax = 3000   #Nejvyšší výška emagramu
 
     background_curves = False #Zobrazovat standardní adiabaty do pozadí?
     background_curves_interval = 5 #Vykreslovat adiabaty do pozadí každých x °C

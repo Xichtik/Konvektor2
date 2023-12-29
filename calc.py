@@ -97,7 +97,7 @@ def salr(temp: float, pres:float) -> float: #Vrací hodnotu nasyceně adiabatick
     return const.gammaD*cit/jme
 
 def lapse_rate(t0: float, t1: float, a0: float, a1: float) -> float: #Vrací hodnotu vertikálního teplotního gradientu [°C/km] mezi hladinami a0 a a1 [m] při teplotách t0, t1 [°C]
-    return (t0-t1)/(a1-a0-0.01)*1000
+    return (t0-t1)/(a1-a0-0.001)*1000
 
 def data_at_alt(alt:float, Alist: List[float], Plist: List[float]) -> float: #Vrací tlak ve výšce alt
     for a, p in zip(Alist, Plist):
@@ -136,5 +136,7 @@ def radius_sphere(V: float) -> float: #Vrací poloměr [m] koule o objemu V [m^3
 def circle_area(r: float) -> float: #Vrací obsah [m^2] kruhu o poloměru r [m]
     return math.pi*r**2
 
+def pyth(a: float, b: float) -> float: #Vrací délku přepony pravpúhlého trojúhelníku o odvěsnách a,b
+    return math.sqrt(a**2 + b**2)
 
 
