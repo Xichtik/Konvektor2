@@ -1,5 +1,6 @@
 import calc
 import pandas
+import math
 from preferences import Const, Options
 from typing import List
 
@@ -18,6 +19,9 @@ class Data():
 
         for i in range(len(self.Slist)): #Převod z uzlů na metry za sekundu
             self.Slist[i] = calc.kts_ms(self.Slist[i])
+
+        self.CCL = self.find_CCL()
+        self.LCL = self.find_LCL()
     
     def dry_adiabat(self, temp: float, alt: float) -> List[float]: #Vrací seznam teplot suché adiabaty, která prochází souřadnicemi [temp, alt]
         return [calc.adiab_dry_lift(temp, alt, a) for a in self.Alist]
@@ -28,17 +32,17 @@ class Data():
             curve.append(calc.adiab_mixr_lift(self.Plist[i], self.Plist[i-1], curve[-1], curve[-1]))
         return curve
 
-    def find_LCL(self) -> tuple[float, float|int]:
+    def find_LCL(self) -> tuple[float, float|int]: #Vrací souřadnice (temp, alt) [°C,m] výstupné kondenzační hladiny LCL v datové řadě
         for temp, dewp, alt in zip(self.dry_adiabat(self.Tlist[0], self.Alist[0]), self.mixr_curve(self.Hlist[0]), self.Alist):
             if dewp >= temp:
                 return (dewp, alt)
 
-    def find_CCL(self) -> tuple[float, float|int]:
+    def find_CCL(self) -> tuple[float, float|int]: #Vrací souřadnice (temp, alt) [°C,m] konvektivní kondenzační hladiny CCL v datové řadě
         for temp, dewp, alt in zip(self.Tlist, self.mixr_curve(self.Hlist[0]), self.Alist):
             if dewp >= temp:
                 return (dewp, alt)
     
-    def conv_dry_adiabat(self) -> List[float]:
+    def conv_dry_adiabat(self) -> List[float]: #Vrací seznam teplot adiabaty, která prochází konvektivní kondenzační hladinou
         return self.dry_adiabat(self.find_CCL()[0], self.find_CCL()[1])
     
     def sat_adiabat(self, dewp: float, alt: float) -> List[float]: #Vrací seznam teplot nasycené adiabaty procházející souřadnicemi [temp, alt]
@@ -90,5 +94,26 @@ class Data():
         #return 0
     
     def brunt_vaisala_freq(self, i) -> float:
+        bvfs = (const.g/calc.theta_temp_K(self.Tlist[i], self.Hlist[i], self.Plist[i]))*calc.lapse_rate(calc.theta_temp_K(self.Tlist[i], self.Hlist[i], self.Plist[i]), calc.theta_temp_K(self.Tlist[i+1], self.Hlist[i+1], self.Plist[i+1]), self.Alist[i], self.Alist[i+1])
+        try:
+            return math.sqrt(bvfs)
+        except:
+            return -1 #raise ValueError("Brunt-Vaisala frequency negative: atmospheric conditions unstable.")
+            
+    def brunt_vaisala_period(self, i) -> float:
+        b = self.brunt_vaisala_freq(i)
+        if b>0:
+            return 1/b
+        else:
+            return -1
+
+    def brunt_vaisala_wavelength(self, i) -> float:
+        b = self.brunt_vaisala_period(i)
+        if b>=0:
+            return self.Slist[i]*b
+        else:
+            return -1
+
+    def CAPE(self) -> float:
         pass
 

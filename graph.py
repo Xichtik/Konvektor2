@@ -8,7 +8,7 @@ from sim import *
 options = Options()
 
 
-def plot_emagram(data: Data, parcel: Parcel) -> None:
+def plot_emagram(data: Data, parcel: Parcel = None) -> None:
     Emagram_fig = plot.figure(dpi = options.dpi)
     plot.figure(Emagram_fig)
     emagram = plot.subplot(111)
@@ -160,6 +160,43 @@ def plot_density(data: Data) -> None:
     rho.set_ylabel("Altitude AMSL [m]")
     Rho_fig.canvas.manager.set_window_title('Air density')
 
+def plot_BVF(data: Data) -> None:
+    bvf_fig = plot.figure(dpi = options.dpi)
+    plot.figure(bvf_fig)
+    bvf_plot = plot.subplot(111)
+    bvf_list = [data.brunt_vaisala_freq(i) for i in range(len(data.Alist)-1)]
+    bvf_plot.scatter(bvf_list, data.Alist[:-1], color = 'xkcd:pink')
+    #bvf_plot.legend()
+    bvf_plot.grid()
+    bvf_plot.set_xlabel("Brunt-Vaisala frequency [Hz]")
+    bvf_plot.set_ylabel("Altitude AMSL [m]")
+    bvf_fig.canvas.manager.set_window_title('Brunt-Vaisala frequency')
+
+def plot_BVP(data: Data) -> None:
+    bvp_fig = plot.figure(dpi = options.dpi)
+    plot.figure(bvp_fig)
+    bvp_plot = plot.subplot(111)
+    bvp_list = [data.brunt_vaisala_period(i) for i in range(len(data.Alist)-1)]
+    bvp_plot.scatter(bvp_list, data.Alist[:-1], color = 'xkcd:pink')
+    #bvp_plot.legend()
+    bvp_plot.grid()
+    bvp_plot.set_xlabel("Brunt-Vaisala period [s]")
+    bvp_plot.set_ylabel("Altitude AMSL [m]")
+    bvp_fig.canvas.manager.set_window_title('Brunt-Vaisala period')
+
+def plot_BVW(data: Data) -> None:
+    bvw_fig = plot.figure(dpi = options.dpi)
+    plot.figure(bvw_fig)
+    bvw_plot = plot.subplot(111)
+    bvw_list = [data.brunt_vaisala_wavelength(i) for i in range(len(data.Alist)-1)]
+    bvw_plot.scatter(bvw_list, data.Alist[:-1], color = 'xkcd:pink')
+    #bvw_plot.legend()
+    bvw_plot.grid()
+    bvw_plot.set_xlabel("Undulatus cloud wavelength [m]")
+    bvw_plot.set_ylabel("Altitude AMSL [m]")
+    bvw_fig.canvas.manager.set_window_title('Gravity wavelength')
+
+
 def plot_background_curves(emagram: plot, data: Data, interval:float) -> None:
     for t in range(int(-200/interval),int(100/interval)):
             emagram.plot(data.sat_adiabat(interval*t, data.Alist[0]), data.Alist, color = 'g', linestyle = ':', linewidth = 1)
@@ -178,49 +215,53 @@ def plot_parcel_temps(parcel: Parcel) -> None:
     parcel_plot.set_ylabel("Altitude AMSL [m]")
     parcel_fig.canvas.manager.set_window_title('Parcel temperature and dewpoint')
 
-def plot_parcel_dynamics(parcel: Parcel) -> None:
+def plot_parcel_dynamics(res: List[Parcel]) -> None:
     parcel_fig = plot.figure(dpi = options.dpi)
     plot.figure(parcel_fig)
     parcel_plot = plot.subplot(111)
-    parcel_plot.plot(parcel.history.v_x, parcel.history.alt, label = 'v_x [m/s]')
-    parcel_plot.plot(parcel.history.v_y, parcel.history.alt, label = 'v_y [m/s]')
-    parcel_plot.plot(parcel.history.v_z, parcel.history.alt, label = 'v_z [m/s]')
-    parcel_plot.plot(parcel.history.a_x, parcel.history.alt, label = 'a_x [m/s^2]')
-    parcel_plot.plot(parcel.history.a_y, parcel.history.alt, label = 'a_y [m/s^2]')
-    parcel_plot.plot(parcel.history.b, parcel.history.alt, label = 'b (a_z) [m/s^2]')
+    for parcel in res:
+        parcel_plot.plot(parcel.history.v_x, parcel.history.alt, label = 'v_x [m/s]')
+        parcel_plot.plot(parcel.history.v_y, parcel.history.alt, label = 'v_y [m/s]')
+        parcel_plot.plot(parcel.history.v_z, parcel.history.alt, label = 'v_z [m/s]')
+        parcel_plot.plot(parcel.history.a_x, parcel.history.alt, label = 'a_x [m/s^2]')
+        parcel_plot.plot(parcel.history.a_y, parcel.history.alt, label = 'a_y [m/s^2]')
+        parcel_plot.plot(parcel.history.b, parcel.history.alt, label = 'b (a_z) [m/s^2]')
     parcel_plot.legend()
     parcel_plot.grid()
     parcel_plot.set_xlabel("Velocity [m/s] | Acceleration [m/s^2]")
     parcel_plot.set_ylabel("Altitude AMSL [m]")
     parcel_fig.canvas.manager.set_window_title('Parcel velocities and accelerations')
 
-def plot_parcel_track(parcel: Parcel) -> None:
+def plot_parcel_track(res: List[Parcel]) -> None:
     Track_fig = plot.figure(dpi = options.dpi)
     plot.figure(Track_fig)
     track = plot.subplot(111, projection = 'polar')
     track.set_theta_zero_location('N')
     track.set_theta_direction(-1)
-    track.plot([math.asin(s_x/(pyth(s_x, s_y)+0.001)) for s_x, s_y in zip(parcel.history.s_x, parcel.history.s_y)], [pyth(s_x, s_y) for s_x, s_y in zip(parcel.history.s_x, parcel.history.s_y)])
+    for parcel in res:
+        track.plot([math.asin(s_x/(pyth(s_x, s_y)+0.001)) for s_x, s_y in zip(parcel.history.s_x, parcel.history.s_y)], [pyth(s_x, s_y) for s_x, s_y in zip(parcel.history.s_x, parcel.history.s_y)])
     Track_fig.canvas.manager.set_window_title('Parcel ground track')
 
-def plot_parcel_climb(parcel: Parcel) -> None:
+def plot_parcel_climb(res: List[Parcel]) -> None:
     parcel_fig = plot.figure(dpi = options.dpi)
     plot.figure(parcel_fig)
     parcel_plot = plot.subplot(111)
-    parcel_plot.plot(parcel.history.v_z, parcel.history.alt, color = 'xkcd:violet', label = 'Vertical speed [m/s]')
+    for parcel in res:
+        parcel_plot.plot(parcel.history.v_z, parcel.history.alt, label = 'Vertical speed [m/s]')
     parcel_plot.legend()
     parcel_plot.grid()
     parcel_plot.set_xlabel("Vertical speed [m/s]")
     parcel_plot.set_ylabel("Altitude AMSL [m]")
     parcel_fig.canvas.manager.set_window_title('Parcel climb rate')
 
-def plot_parcel_tilt(parcel: Parcel) -> None:
+def plot_parcel_tilt(res: List[Parcel]) -> None:
     parcel_fig = plot.figure(dpi = options.dpi)
     plot.figure(parcel_fig)
     parcel_plot = plot.subplot(111)
     parcel_plot.set_xlim(0, 90)
     parcel_plot.xaxis.set_major_locator(ticker.MultipleLocator(15))
-    parcel_plot.plot([parcel.comp_tilt(i) for i in range(len(parcel.history.alt))], parcel.history.alt, color = 'xkcd:violet', label = 'Vertical speed [m/s]')
+    for parcel in res:
+        parcel_plot.plot([parcel.comp_tilt(i) for i in range(len(parcel.history.alt))], parcel.history.alt, label = 'Vertical speed [m/s]')
     parcel_plot.legend()
     parcel_plot.grid()
     parcel_plot.set_xlabel("Parcel track tilt from vertical [°]")

@@ -46,7 +46,7 @@ def alt_range(list: List[float], altlist: List[float], bottom: float, top: float
 def vapour_p(temp: float) -> float: #Vrací maximální parciální tlak ![kPa] nasycení vzduchu vodní parou při teplotě temp
     return 0.61121*math.exp((18.678-(temp/234.5))*(temp/(257.14+temp)))
 
-def dewp_from_vapour_p(e: float) -> float:
+def dewp_from_vapour_p(e: float) -> float: #Vrací rosný bod [°C] při parciálním tlaku vodní páry e [kPa]
     return (257.14*math.log(e/0.61121))/(18.678-math.log(e/0.61121))
 
 def rel_humi(temp: float, dewp: float) -> float: #Vrací relativní vlhkost při teplotě temp a rosném bodu dewp
@@ -139,4 +139,5 @@ def circle_area(r: float) -> float: #Vrací obsah [m^2] kruhu o poloměru r [m]
 def pyth(a: float, b: float) -> float: #Vrací délku přepony pravpúhlého trojúhelníku o odvěsnách a,b
     return math.sqrt(a**2 + b**2)
 
-
+def list_avg(list: List[float|int]) -> float: #Vrací průměrnou hodnotu seznamu
+    return sum(list)/len(list)

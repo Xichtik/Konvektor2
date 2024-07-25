@@ -30,7 +30,7 @@ class Const:
     # --- SIMULACE ---
     cd = 0.47 #Součinitel aerodynamického odporu koule
     k = 0.052 #Součinitel vnitřního tření konvektivní částice
-    mol = 1 #Látkové množství vzduchu simulované částice
+    mol = 100 #Látkové množství vzduchu simulované částice
     opt = 3 #Konstanta pro výpočet rychlosti stoupání dle učebnice (default 3)
 
     # --- RŮZNÉ ---
@@ -40,14 +40,14 @@ class Const:
 @dataclass
 class Options:
 
-    csv_path = "./data/RAW_11520_2022-03-05_1200.csv"
+    csv_path = "./data/nedele.csv"
 
     # --- SIMULACE ---
-    dt = 0.1   #Časový krok pro simulace
-    sim_secs = 10000   #Simulovaná doba v sekundách
+    dt = 0.5   #Časový krok pro simulace
+    sim_secs = 3000   #Simulovaná doba v sekundách
     cycles = int(sim_secs/dt)   #Počet iterací simulace
     simUntilCCL = False #Při hodnotě True se simulace automaticky zastaví při dostoupání částice do kondenzační hladiny
-    notif_interval = 5000   #Interval, po kolika iteracích se printuje oznámení
+    notif_interval = 1000   #Interval, po kolika iteracích se printuje oznámení
     
     v0 = 0   #Počáteční vertikální rychlost konvektivní částice
     virtv0 = 0   #Počáteční vertikální rychlost konvektivní částice při výpočtech s virtuální teplotou

@@ -7,6 +7,10 @@ const = Const()
 options = Options()
 
 
+class Stop(Exception):
+    pass
+
+
 class History():
     def __init__(self):
         self.time: List[float] = []
@@ -59,13 +63,12 @@ class Parcel():
         self.save()
 
     def iterate(self):
-
         self.update_dimensions()
         self.update_height()
         self.update_wind()
         self.update_ambient()
         self.update_temperature()
-        self.update_time()        
+        self.update_time()
 
     def save(self):
         self.history.time.append(self.time)
@@ -88,11 +91,17 @@ class Parcel():
         self.history.mass.append(self.mass)
 
     def simulate(self) -> None:
+        print("Simulation started.")
         while self.cycles < options.cycles:
-            self.iterate()
-            self.save()
-            self.cycles += 1
-            self.print_report()
+            try:
+                self.check_height()
+                self.iterate()
+                self.save()
+                self.cycles += 1
+                self.print_report()
+            except Stop:
+                print(f"Simulation auto-stop, {self.cycles} iterations completed.")
+                break
         print("Simulation complete.")
     
     def print_report(self) -> None:
@@ -113,7 +122,9 @@ class Parcel():
         self.pres = data_at_alt(self.alt, self.data.Alist, self.data.Plist)
 
     def update_height(self) -> None:
-        self.b = accel(self.temp, virt_temp_K(self.ambi, self.adew, self.pres)) - sign(self.v_z)*drag_sphere(self.v_z, self.area, density(self.ambi, self.adew, self.pres))/self.mass
+        #self.b = accel(self.temp, virt_temp_K(self.ambi, self.adew, self.pres)) - sign(self.v_z)*drag_sphere(self.v_z, self.area, density(self.ambi, self.adew, self.pres))/self.mass
+        #self.b = accel(self.temp, self.ambi+273.15) - sign(self.v_z)*drag_sphere(self.v_z, self.area, density(self.ambi, self.adew, self.pres))/self.mass
+        self.b = (self.vol*const.g*(density(self.ambi, self.adew, self.pres)-density(self.temp, self.dewp, self.pres))) #- sign(self.v_z)*drag_sphere(self.v_z, self.area, density(self.ambi, self.adew, self.pres)))/self.mass
         self.v_z += self.b * options.dt
         self.alt += self.v_z * options.dt
 
@@ -134,7 +145,34 @@ class Parcel():
         self.s_x += self.v_x*options.dt
         self.s_y += self.v_y*options.dt
 
-    def comp_tilt(self, i: int) -> float:
+    def comp_tilt(self, i: int) -> float: #Vrací odklon částice od počátku [°] v i-té iteraci
         return math.atan(pyth(self.history.s_x[i], self.history.s_y[i])/self.history.alt[i])*180/math.pi
 
+    def check_height(self) -> None:
+        if options.simUntilCCL is True:
+            if self.alt >= self.data.CCL[1]:
+                raise Stop
+                
+
+class Thermal(Parcel):
+    def update_height(self) -> None:
+        self.v_z = const.g*((self.data.Tlist[list_i(self.alt, self.data.Alist)] - self.data.Tlist[list_i(self.alt, self.data.Alist)+1] - (self.data.Alist[list_i(self.alt, self.data.Alist)+1]-self.data.Alist[list_i(self.alt, self.data.Alist)])*const.gammaD/1000+3)/(const.k*(self.data.Tlist[list_i(self.alt, self.data.Alist)+1]+273.15)))
+        self.alt += self.v_z * options.dt
+
+    def iterate(self):
+        try:
+            if self.alt > self.data.Alist[5]:
+                if abs(list_avg(self.history.v_z[-25:])) < 0.1:
+                    raise Stop
+        except:
+            raise
+        else:
+            self.update_height()
+            self.update_wind()
+            self.update_time()  
+
+class Column(Thermal):
+    def update_height(self) -> None:
+        self.v_z = const.g*((self.data.Tlist[0] - self.data.Tlist[list_i(self.alt, self.data.Alist)+1] - (self.data.Alist[list_i(self.alt, self.data.Alist)+1]-self.data.Alist[0])*const.gammaD/1000+3)/(const.k*(self.data.Tlist[list_i(self.alt, self.data.Alist)+1]+273.15)))
+        self.alt += self.v_z * options.dt
 
